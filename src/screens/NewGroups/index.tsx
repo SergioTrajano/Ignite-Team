@@ -7,14 +7,22 @@ import { Header } from "@components/Header";
 import { HighLight } from "@components/Highlight";
 import { Container, Content, Icon } from "./style";
 import { Input } from "@components/Input";
+import { groupCreate } from "@storage/group/groupCreate";
 
 export function NewGroup() {
     const [group, setGroup] = useState<string>("");
 
     const { navigate } = useNavigation<NativeStackNavigationProp<ReactNavigation.RootParamsList>>();
 
-    function handleNewGroup() {
-        navigate("players", { group });
+    async function handleNewGroup() {
+        if (group === "") return;
+
+        try {
+            await groupCreate(group);
+            navigate("players", { group });
+        } catch (e) {
+            console.log(e);
+        }
     }
 
     return (
