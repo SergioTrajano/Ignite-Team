@@ -17,7 +17,7 @@ export function NewGroup() {
     const { navigate } = useNavigation<NativeStackNavigationProp<ReactNavigation.RootParamsList>>();
 
     async function handleNewGroup() {
-        if (group === "") {
+        if (group.trim() === "") {
             return Alert.alert("Novo grupo", "Informe o nome da turma para cria-la");
         }
 
