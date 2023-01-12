@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { useRoute } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { Alert, FlatList, TextInput } from "react-native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 import { Container, Form, HeaderList, NumberOfPlayers } from "./style";
 
@@ -18,6 +19,8 @@ import { playerAddByGroup } from "@storage/player/playerAddByGroup";
 import { playersGetByGroupAndTeam } from "@storage/player/playerGetByGroupAndTeam";
 import { PlayerStorageDTO } from "@storage/player/PlayerStorageDTO";
 import { playerRemoveByGroup } from "@storage/player/playerRemoveByGroup";
+import { groupRemoveByName } from "@storage/group/groupRemoveByName";
+import { Loading } from "@components/Loading";
 
 type RouteParams = {
     group: string;
@@ -27,9 +30,12 @@ export function Players() {
     const [activedTeam, setActivedteam] = useState<string>("TIME A");
     const [players, setPlayers] = useState<PlayerStorageDTO[]>([]);
     const [newPlayerName, setNewPlayerName] = useState<string>("");
+    const [isLoading, setIsloading] = useState<boolean>(true);
 
     const route = useRoute();
     const { group } = route.params as RouteParams;
+
+    const { navigate } = useNavigation<NativeStackNavigationProp<ReactNavigation.RootParamsList>>();
 
     const newPlayerNameInputRef = useRef<TextInput>(null);
 
@@ -74,7 +80,27 @@ export function Players() {
         }
     }
 
+    async function handleGroupRemove() {
+        Alert.alert("Remover grupo", `Deseja remove o grupo ${group}?`, [
+            { text: "Não", style: "cancel" },
+            { text: "Sim", onPress: () => groupRemove() },
+        ]);
+    }
+
+    async function groupRemove() {
+        try {
+            await groupRemoveByName(group);
+
+            navigate("groups");
+        } catch (error) {
+            console.log(error);
+            Alert.alert("Remover grupo", "Não foi possível remover o grupo.");
+        }
+    }
+
     async function fetchPlayersByTeam() {
+        setIsloading(true);
+
         try {
             const playerByTeam = await playersGetByGroupAndTeam(group, activedTeam);
 
@@ -82,6 +108,8 @@ export function Players() {
         } catch (error) {
             console.log(error);
             Alert.alert("Participante", "Não foi possível carregar os participantes.");
+        } finally {
+            setIsloading(false);
         }
     }
 
@@ -131,26 +159,31 @@ export function Players() {
                 <NumberOfPlayers>{players.length}</NumberOfPlayers>
             </HeaderList>
 
-            <FlatList
-                data={players}
-                keyExtractor={(item) => item.name}
-                renderItem={({ item }) => (
-                    <PlayerCard
-                        name={item.name}
-                        onRemove={() => handlePlayerRemove(item.name)}
-                    />
-                )}
-                ListEmptyComponent={() => <ListEmpty message="Não há pessoas nesse time" />}
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={[
-                    { paddingBottom: 100 },
-                    players.length === 0 && { flex: 1 },
-                ]}
-            />
+            {isLoading ? (
+                <Loading />
+            ) : (
+                <FlatList
+                    data={players}
+                    keyExtractor={(item) => item.name}
+                    renderItem={({ item }) => (
+                        <PlayerCard
+                            name={item.name}
+                            onRemove={() => handlePlayerRemove(item.name)}
+                        />
+                    )}
+                    ListEmptyComponent={() => <ListEmpty message="Não há pessoas nesse time" />}
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={[
+                        { paddingBottom: 100 },
+                        players.length === 0 && { flex: 1 },
+                    ]}
+                />
+            )}
 
             <Button
                 title="Remover turma"
                 type="SECONDARY"
+                onPress={handleGroupRemove}
             />
         </Container>
     );
