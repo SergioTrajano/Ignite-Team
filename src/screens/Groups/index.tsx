@@ -36,6 +36,10 @@ export function Groups() {
         }
     }
 
+    function handleOpenGroup(group: string) {
+        navigate("players", { group });
+    }
+
     return (
         <Container>
             <Header showBackButton={false} />
@@ -46,7 +50,12 @@ export function Groups() {
             <FlatList
                 data={groups}
                 keyExtractor={(item, i) => `${item} + ${i}`}
-                renderItem={({ item }) => <GroupCard title={item} />}
+                renderItem={({ item }) => (
+                    <GroupCard
+                        title={item}
+                        onPress={() => handleOpenGroup(item)}
+                    />
+                )}
                 contentContainerStyle={groups.length === 0 && { flex: 1 }}
                 ListEmptyComponent={() => (
                     <ListEmpty message="Que tal cadastrar a primeira turma?" />
